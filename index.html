@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map</title>
+    <style>
+        html,
+        body {
+          width: 100%;
+          height: 100%;
+          padding: 0;
+          margin: 0;
+        }
+        
+        #map {
+          width: 100%;
+          height: 80%;
+          padding: 0;
+          margin: 0;
+        }
+      </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div>
+      <ul id="ulList">
+      </ul>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=<ваш API-ключ>" type="text/javascript"></script>
+    <script>
+    let arr = new Array();
+
+    ymaps.ready(function() {
+        var myMap = new ymaps.Map('map', {
+            center: [53.721152, 91.442396],
+            zoom: 9
+            }, {
+            searchControlProvider: 'yandex#search'
+            }),
+            placemark = new ymaps.Placemark(null),
+            longitude, latitude;
+        myMap.geoObjects.add(placemark);
+        console.log(myMap.geoObjects);
+        console.log(placemark);
+        
+    // Обработка события, возникающего при щелчке
+    // левой кнопкой мыши в любой точке карты.
+    // При возникновении такого события откроем балун.
+    myMap.events.add('click', function (e) {
+        //Добавление события и маркера
+        let content = prompt("Введите событие:");
+        var coords = e.get('coords');
+        myMap.geoObjects.add(new ymaps.Placemark([coords[0].toPrecision(6), coords[1].toPrecision(6)], {
+            balloonContent: "Событие: " + content +  " " + "Координаты: " + coords[0].toPrecision(6) + " " +  coords[1].toPrecision(6)
+        }));
+
+        arr.push(content);
+
+        //Сохраняем в лоальном хранилище
+        localStorage.setItem("object", JSON.stringify(arr));
+        object = JSON.parse (localStorage.getItem("object"));
+        let index = 0;
+
+        //выводим список событий
+        for (let i = 0; i <= arr.length; i++) {
+            index++;
+            if (index == arr.length) {
+                let newListItem = document.createElement('li');
+                newListItem.textContent = arr[i];
+                document.querySelector('#ulList').appendChild(newListItem);
+            }
+        }
+
+        if (!myMap.balloon.isOpen()) {
+            var coords = e.get('coords');
+            myMap.balloon.open(coords, {
+                contentHeader:'Событие!',
+                contentBody: content +
+                    '<p>Координаты щелчка: ' + [
+                    coords[0].toPrecision(6),
+                    coords[1].toPrecision(6)
+                    ].join(', ') + '</p>',
+                contentFooter:'<sup>Щелкните еще раз</sup>'
+            });
+        }
+        else {
+            myMap.balloon.close();
+        }
+    });
+
+    // Обработка события, возникающего при щелчке
+    // правой кнопки мыши в любой точке карты.
+    // При возникновении такого события покажем всплывающую подсказку
+    // в точке щелчка.
+    myMap.events.add('contextmenu', function (e) {
+        myMap.hint.open(e.get('coords'), 'Кто-то щелкнул правой кнопкой');
+    });
+    
+    // Скрываем хинт при открытии балуна.
+    myMap.events.add('balloonopen', function (e) {
+        myMap.hint.close();
+    });
+    });
+    </script>
+</body>
+</html>
